@@ -7,6 +7,7 @@ Table of Contents
 =================
 
    * [helm-aws-kowl](#helm-aws-kowl)
+      * [Dependencies](#dependencies)
       * [Pre-requisites](#pre-requisites)
          * [Namespace](#namespace)
          * [Config Updates](#config-updates)
