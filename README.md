@@ -45,6 +45,7 @@ In `stages/prod/prod-values.yaml` file available inside `stages/prod` folder, ad
 |schemaRegistry.urls |List of schema registry urls |
 |alb.ingress.kubernetes.io/certificate-arn |ACM certificate arn|
 |external-dns.stage.kubernetes.io/hostname<br/>hosts.host[0] |Domain name for external access which will be updated in Route53 |
+|alb.ingress.kubernetes.io/load-balancer-attributes: access_logs.s3.bucket= |S3 bucket where the Access logs need to be written |
 
 ## Install/Upgrade Chart
 
