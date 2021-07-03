@@ -17,6 +17,14 @@ ingress:
     alb.ingress.kubernetes.io/tags: Stage=prod, App=Kowl
     alb.ingress.kubernetes.io/certificate-arn: # ACM certificate for https
     external-dns.stage.kubernetes.io/hostname: # External DNS hostname
+    alb.ingress.kubernetes.io/load-balancer-attributes: access_logs.s3.enabled=true,access_logs.s3.bucket=,access_logs.s3.prefix=awselasticloadbalancing/prod,idle_timeout.timeout_seconds=600
+    
+    # cognito auth integration
+#     alb.ingress.kubernetes.io/auth-type: cognito
+#     alb.ingress.kubernetes.io/auth-idp-cognito: '{"userPoolARN":"arn:aws:cognito-idp:us-east-1::userpool/","userPoolClientID":"","userPoolDomain":""}'
+#     alb.ingress.kubernetes.io/auth-on-unauthenticated-request: authenticate
+#     alb.ingress.kubernetes.io/auth-session-cookie: kowl-cookie
+#     alb.ingress.kubernetes.io/auth-session-timeout: '3600'
   hosts:
     - host: # External DNS hostname
       paths: 
