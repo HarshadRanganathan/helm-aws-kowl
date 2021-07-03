@@ -25,6 +25,7 @@ ingress:
 #     alb.ingress.kubernetes.io/auth-on-unauthenticated-request: authenticate
 #     alb.ingress.kubernetes.io/auth-session-cookie: kowl-cookie
 #     alb.ingress.kubernetes.io/auth-session-timeout: '3600'
+
   hosts:
     - host: # External DNS hostname
       paths: 
