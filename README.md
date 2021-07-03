@@ -15,13 +15,14 @@ kubectl create namespace platform
 
 ### Config Updates
 
-1. Update `stages/prod/prod-values.yaml` file with your broker and schema registry url's.
-2. Update `alb.ingress.kubernetes.io/certificate-arn` annotation with your ACM arn.
-3. Provide the dns hostname to update your route53 records.
+In `stages/prod/prod-values.yaml` file available inside `stages/prod` folder, add values for below settings:
 
-```yaml
-external-dns.stage.kubernetes.io/hostname: # External DNS hostname
-```
+|||
+|--|--|
+|brokers |List of broker urls |
+|schemaRegistry.urls |List of schema registry urls |
+|alb.ingress.kubernetes.io/certificate-arn |ACM certificate arn|
+|external-dns.stage.kubernetes.io/hostname<br/>hosts.host[0] |External DNS hostname |
 
 ## Install/Upgrade Chart
 
