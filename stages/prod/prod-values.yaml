@@ -29,4 +29,5 @@ ingress:
   hosts:
     - host: # External DNS hostname
       paths: 
-        - /*
+        - path: /*
+          pathType: ImplementationSpecific
