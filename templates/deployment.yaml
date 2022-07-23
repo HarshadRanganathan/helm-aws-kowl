@@ -15,6 +15,9 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- if .Values.podAnnotations }}
+        {{ toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
       labels:
         {{- include "kowl.selectorLabels" . | nindent 8 }}
     spec:
@@ -32,24 +35,29 @@ spec:
         - name: secrets
           secret:
             secretName: {{ include "kowl.secretName" . }}
+        {{- with .Values.extraVolumes }}
+        {{- tpl . $ | nindent 8 }}
+        {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           args:
             - "--config.filepath=/etc/kowl/configs/config.yaml"
             - "--kafka.sasl.password=$(KAFKA_SASL_PASSWORD)"
             - "--kafka.tls.passphrase=$(KAFKA_TLS_PASSPHRASE)"
-            {{- if eq .Values.image.repository "quay.io/cloudhut/kowl-business" }}
+            {{- if eq .Values.image.repository "cloudhut/kowl-business" }}
             - "--login.jwt-secret=$(LOGIN_JWT_SECRET)"
             - "--login.google.client-secret=$(LOGIN_GOOGLE_CLIENT_SECRET)"
             - "--login.github.client-secret=$(LOGIN_GITHUB_CLIENT_SECRET)"
             - "--login.github.directory.personal-access-token=$(LOGIN_GITHUB_PERSONAL_ACCESS_TOKEN)"
+            - "--login.okta.client-secret=$(LOGIN_OKTA_CLIENT_SECRET)"
+            - "--login.okta.directory.api-token=$(LOGIN_OKTA_DIRECTORY_API_TOKEN)"
             {{- if not .Values.kowl.config.cloudhut }}
             - "--cloudhut.license-token=$(CLOUDHUT_LICENSE_TOKEN)"
             {{- end }}
             {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ include "kowl.imagesRegistryName" . }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
             - name: configs
@@ -58,17 +66,28 @@ spec:
             - name: secrets
               mountPath: /etc/kowl/secrets
               readOnly: true
+            {{- with .Values.extraVolumeMounts }}
+            {{- tpl . $ | nindent 12 }}
+            {{- end }}
           ports:
             - name: http
               containerPort: {{ include "kowl.serverListenPort" . }}
               protocol: TCP
           livenessProbe:
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.livenessProbe.successThreshold }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
             httpGet:
               path: /admin/health
               port: http
           readinessProbe:
-            # Give Kowl initially some time to connect to all Kafka Brokers
-            initialDelaySeconds: 10
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.readinessProbe.successThreshold }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
             httpGet:
               path: /admin/health
               port: http
@@ -79,19 +98,19 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ include "kowl.secretName" . }}
-                  key: kafka-sasl-password
+                  key: {{ get .Values.secret.keyName "kafka-sasl-password" }}
             - name: KAFKA_TLS_PASSPHRASE
               valueFrom:
                secretKeyRef:
                  name: {{ include "kowl.secretName" . }}
-                 key: kafka-tls-passphrase
-            {{- if eq .Values.image.repository "quay.io/cloudhut/kowl-business" }}
+                 key: {{ get .Values.secret.keyName "kafka-tls-passphrase" }}
+            {{- if eq .Values.image.repository "cloudhut/kowl-business" }}
             {{- if not .Values.kowl.config.cloudhut }}
             - name: CLOUDHUT_LICENSE_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: {{ include "kowl.secretName" . }}
-                  key: cloudhut-license-token
+                  key: {{ get .Values.secret.keyName "cloudhut-license-token" }}
             {{- end }}
             - name: LOGIN_JWT_SECRET
               valueFrom:
@@ -113,8 +132,27 @@ spec:
                secretKeyRef:
                  name: {{ include "kowl.secretName" . }}
                  key: login-github-personal-access-token
+            - name: LOGIN_OKTA_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kowl.secretName" . }}
+                  key: login-okta-client-secret
+            - name: LOGIN_OKTA_DIRECTORY_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kowl.secretName" . }}
+                  key: login-okta-directory-api-token
             {{- end }}
-
+            {{- with .Values.extraEnv }}
+            {{- tpl . $ | nindent 12 }}
+            {{- end }}
+          envFrom:
+            {{- with .Values.extraEnvFrom }}
+            {{- tpl . $ | nindent 12 }}
+            {{- end }}
+        {{- with .Values.extraContainers }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
